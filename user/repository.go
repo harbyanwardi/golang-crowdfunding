@@ -4,6 +4,7 @@ import "gorm.io/gorm"
 
 type Repository interface { //*huruf depan kapital berarti bersifat public
 	Save(user User) (User, error)
+	FindByEmail(email string) (User, error)
 }
 
 type repository struct { //*huruf depan kecil berarti bersifat privat
@@ -21,4 +22,14 @@ func (r *repository) Save(user User) (User, error) {
 	}
 
 	return user, nil
+}
+
+func (r *repository) FindByEmail(email string) (User, error) {
+	var user User
+	err := r.db.Where("email = ?", email).Find(&user).Error
+	if err != nil {
+		return user, err
+	}
+	return user, nil
+
 }
