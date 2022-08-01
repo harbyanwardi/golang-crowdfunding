@@ -130,8 +130,9 @@ func (h *userHandler) UploadAvatar(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}
-	//sementara hardcode , harusnya dari JWT
-	userID := 1
+	//currentuser adalah context yg telah kita set di middleware ketika berhasil validasi token
+	currentUser := c.MustGet("currentuser").(user.User)
+	userID := currentUser.ID
 	currentTime := time.Now()
 	date := currentTime.Format("01-02-2006")
 	path := fmt.Sprintf("images/%d-%s-%s", userID, date, file.Filename) //concat
