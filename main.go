@@ -63,6 +63,8 @@ func main() {
 	api.POST("/campaign-images", authMiddleware(authService, userService), campaignHandler.UploadImage)
 	api.GET("/campaign/:id/transactions", authMiddleware(authService, userService), transactionHandler.GetCampaignTransactions)
 
+	api.GET("/transactions", authMiddleware(authService, userService), transactionHandler.GetUserTransactions)
+
 	router.Run()
 
 	//input dari user

@@ -8,6 +8,7 @@ type repository struct {
 
 type Repository interface {
 	GetByCampaignID(CampaignID int) ([]Transaction, error)
+	GetByUserID(UserID int) ([]Transaction, error)
 }
 
 func NewRepository(db *gorm.DB) *repository {
@@ -17,7 +18,18 @@ func NewRepository(db *gorm.DB) *repository {
 func (r *repository) GetByCampaignID(CampaignID int) ([]Transaction, error) {
 	var transactions []Transaction
 
-	err := r.db.Preload("User").Where("campaign_id = ?", CampaignID).Find(&transactions).Error
+	err := r.db.Preload("User").Where("campaign_id = ?", CampaignID).Order("id desc").Find(&transactions).Error
+	if err != nil {
+		return transactions, err
+	}
+	return transactions, nil
+}
+
+func (r *repository) GetByUserID(UserID int) ([]Transaction, error) {
+	var transactions []Transaction
+	//entity transaction berelasi dengan entity campaign (yang juga berelasi dengan campaign images)
+	//join campaign images where is_primary = 1
+	err := r.db.Preload("Campaign.CampaignImages", "campaign_images.is_primary = 1").Where("user_id = ?", UserID).Order("id desc").Find(&transactions).Error
 	if err != nil {
 		return transactions, err
 	}
