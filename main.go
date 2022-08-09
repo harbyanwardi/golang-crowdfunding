@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"gorm.io/driver/mysql"
@@ -58,12 +59,14 @@ func main() {
 	transactionHandler := handler.NewTransactionHandler(transactionService)
 
 	router := gin.Default()
+	router.Use(cors.Default())
 	router.Static("/images", "./images")
 	api := router.Group("api/v1")
 	api.POST("/users", userHandler.RegisterUser)
 	api.POST("/login", userHandler.Login)
 	api.POST("/checkemail", userHandler.CheckEmailAvailability)
 	api.POST("/avatar", authMiddleware(authService, userService), userHandler.UploadAvatar)
+	api.GET("/user/fetch", authMiddleware(authService, userService), userHandler.FetchUser)
 
 	//campaign
 	api.GET("/campaign", campaignHandler.GetCampaign)
