@@ -18,6 +18,7 @@ type Service interface {
 	GetTransactionByCampaignID(input GetCampaignTransactionsInput) ([]Transaction, error)
 	GetTransactionByUserID(UserID int) ([]Transaction, error)
 	CreateTransaction(input CreateTransactionsInput) (Transaction, error)
+	ProcessPayment(input TransactionNotificationInput) error
 }
 
 func NewService(repository Repository, campaignRepository campaign.Repository, paymentService payment.Service) *service {
@@ -82,4 +83,41 @@ func (s *service) CreateTransaction(input CreateTransactionsInput) (Transaction,
 		return newTrans, err
 	}
 	return newTrans, nil
+}
+
+func (s *service) ProcessPayment(input TransactionNotificationInput) error {
+	code := input.OrderID
+	transaction, err := s.repository.GetByCode(code)
+	if err != nil {
+		return err
+	}
+
+	if input.PaymentType == "credit_card" && input.TransactionStatus == "capture" && input.FraudStatus == "accept" {
+		transaction.Status = "paid"
+	} else if input.TransactionStatus == "settlement" {
+		transaction.Status = "paid"
+	} else if input.TransactionStatus == "deny" || input.TransactionStatus == "expire" || input.TransactionStatus == "cancel" {
+		transaction.Status = "cancelled"
+	}
+
+	updatedTrans, err := s.repository.Update(transaction)
+	if err != nil {
+		return err
+	}
+	campaign, err := s.campaignRepository.FindCampaignByID(updatedTrans.CampaignID)
+	if err != nil {
+		return err
+	}
+
+	if updatedTrans.Status == "paid" {
+		//update jumlah pendana bertambah 1
+		campaign.BackerCount = campaign.BackerCount + 1
+		//update jumlah dana terkumpul
+		campaign.CurrentAmount = campaign.CurrentAmount + updatedTrans.Amount
+		_, err := s.campaignRepository.Update(campaign)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

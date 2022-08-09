@@ -75,6 +75,7 @@ func main() {
 
 	api.GET("/transactions", authMiddleware(authService, userService), transactionHandler.GetUserTransactions)
 	api.POST("/transactions", authMiddleware(authService, userService), transactionHandler.CreateTransactions)
+	api.POST("/transactions/notification", transactionHandler.GetNotification)
 
 	router.Run()
 

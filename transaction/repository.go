@@ -9,6 +9,7 @@ type repository struct {
 type Repository interface {
 	GetByCampaignID(CampaignID int) ([]Transaction, error)
 	GetByUserID(UserID int) ([]Transaction, error)
+	GetByCode(Code string) (Transaction, error)
 	Save(transaction Transaction) (Transaction, error)
 	Update(transaction Transaction) (Transaction, error)
 }
@@ -32,6 +33,17 @@ func (r *repository) GetByUserID(UserID int) ([]Transaction, error) {
 	//entity transaction berelasi dengan entity campaign (yang juga berelasi dengan campaign images)
 	//join campaign images where is_primary = 1
 	err := r.db.Preload("Campaign.CampaignImages", "campaign_images.is_primary = 1").Where("user_id = ?", UserID).Order("id desc").Find(&transactions).Error
+	if err != nil {
+		return transactions, err
+	}
+	return transactions, nil
+}
+
+func (r *repository) GetByCode(Code string) (Transaction, error) {
+	var transactions Transaction
+	//entity transaction berelasi dengan entity campaign (yang juga berelasi dengan campaign images)
+	//join campaign images where is_primary = 1
+	err := r.db.Where("code = ?", Code).Find(&transactions).Error
 	if err != nil {
 		return transactions, err
 	}
